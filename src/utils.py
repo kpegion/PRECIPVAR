@@ -202,27 +202,28 @@ def getSubXModelGiorgi(path,model,group,vname,vlev,
     
     return(ds_giorgi)
 
-def plotSlidingCorrs(models,gregions,colors,slist,figname):
+def plotSlidingCorrs(all_models,modelnames,
+                     gregions,colors,slist,figname):
     
     fig=plt.figure(figsize=(8.5,11))
 
     for i,reg in enumerate(gregions):
-    
+        print(i,reg)
         plt.subplot(3,1,i+1)
 
         for iwin,(c,w) in enumerate(zip(colors,slist)):
         
             # Plot each model
-            for imodel,m in enumerate(models):
-                plt.plot(models['time'],
-                         models[reg][imodel,iwin,:].T,
+            for imodel,m in enumerate(modelnames):
+                plt.plot(all_models['time'],
+                         all_models[reg][imodel,iwin,:].T,
                          color=c,linestyle='-',alpha=0.8)  
 #        if (i==0):
 #            plt.legend([str(x) for x in smoothlist],
 #                        title='Window (days)')
 
             
-        plt.ylim(-0.3,1.0)
+        plt.ylim(-0.3,1.1)
         plt.grid(True)
         plt.xlabel('lead(days)')
         plt.ylabel('ACC')
@@ -239,8 +240,9 @@ def plotSlidingCorrs(models,gregions,colors,slist,figname):
 def calcPerfectSkill(ds_emean,ds_emem):
     
     svar=ds_emean.var(dim='ic')
-    nvar=(ds_emean-ds_emean).var(dim='ic')
-    
+    diff=ds_emem-ds_emean
+    nvar=(diff.std(dim='ens')).var(dim='ic')
+
     s=svar/nvar
     s_sq=s*s
     n=len(ds_emem['ens'])
@@ -253,6 +255,10 @@ def calcPerfectSkill(ds_emean,ds_emem):
                    
 def calcPerfectSliding(emean,emem,var_list,win_list):
 
+    # Drop missing ICs
+    #emem=emem.dropna(dim='ic',how='all')
+    #emean=emean.dropna(dim='ic',how='all')
+    
     # Loop over list of smoothing options
     skill_list=[]
     for ismooth in win_list:
@@ -263,8 +269,24 @@ def calcPerfectSliding(emean,emem,var_list,win_list):
 
         # Calculate the correlations
 
-        skill_list.append(calcPerfectSkill(emean_smooth,
-                                           emem_smooth,
-                                           var_list))
+        skill_list.append(utils.calcPerfectSkill(emean_smooth,
+                                                 emem_smooth))
 
     return skill_list
+
+def initSubxDict():
+    
+    gem_dict=dict(group='ECCC',model='GEM',nens_hcst=4)
+    fim_dict=dict(group='ESRL',model='FIMr1p1',nens_hcst=4)
+    cfsv2_dict=dict(group='NCEP',model='CFSv2',nens_hcst=4)
+    ccsm4_dict=dict(group='RSMAS',model='CCSM4',nens_hcst=4)
+    gefs_dict=dict(group='EMC',model='GEFS',nens_hcst=11)
+    geos_dict=dict(group='GMAO',model='GEOS_V2p1',nens_hcst=4)
+    nespc_dict=dict(group='NRL',model='NESM',nens_hcst=1)
+    cesm30l_dict=dict(group='CESM',model='30LCESM1',nens_hcst=10)
+    cesm46l_dict=dict(group='CESM',model='46LCESM1',nens_hcst=10)
+    
+    subx_dict=[gem_dict,fim_dict,cfsv2_dict,ccsm4_dict,gefs_dict,
+               geos_dict,nespc_dict,cesm30l_dict]
+    
+    return subx_dict

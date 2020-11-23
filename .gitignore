@@ -3,3 +3,4 @@ figs/.ipynb_checkpoints/
 src/.ipynb_checkpoints/
 src/Untitled*.ipynb
 src/__pycache__
+figs/test*
